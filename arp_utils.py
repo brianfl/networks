@@ -1,5 +1,5 @@
 import socket, subprocess, select
-from struct import pack, unpack, calcsize
+from struct import pack, unpack
 
 
 # finds our local IP address. Modified from StackOverflow.
@@ -21,7 +21,7 @@ def _find_ip():
 def _find_eth_iface_name():
 
     eth_name = (
-        str(subprocess.check_output(["ip", "route", "list", "0/0"]), 'utf-8')
+        str(subprocess.check_output(["ip", "route", "show", "0/0"]), 'utf-8')
         .partition("dev")[2]
         .partition("proto")[0]
         .strip()
