@@ -1,10 +1,13 @@
 import socket, subprocess, select
 from struct import pack, unpack
 
+# important note... I believe this only detects wired devices right now,
+# not wireless wifi devices.
+
 
 # finds our local IP address. Modified from StackOverflow.
 
-def _find_ip():
+def find_ip():
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -18,7 +21,7 @@ def _find_ip():
     return ip_address
 
 # finding the name of the ethernet interface
-def _find_eth_iface_name():
+def find_eth_iface_name():
 
     eth_name = (
         str(subprocess.check_output(["ip", "route", "show", "0/0"]), 'utf-8')
@@ -30,9 +33,9 @@ def _find_eth_iface_name():
     return eth_name 
 
 # finds MAC address in list form
-def _find_mac():
+def find_mac():
 
-    mac_folder = _find_eth_iface_name()
+    mac_folder = find_eth_iface_name()
     
     mac_address = (
         str(subprocess.check_output(["cat", "/sys/class/net/" + mac_folder + '/address']), 'utf-8')
@@ -63,10 +66,10 @@ def _add_ip(ip, string):
 
 
 # constructs an ARP packet to be sent to a specific target IP
-def construct_arp_packet(target_ip):
+def construct_arp_packet(target_ip, my_ip, my_mac):
 
-    mac_address = _find_mac()
-    ip_address = _find_ip()
+    mac_address = my_mac
+    ip_address = my_ip
     target_ip_list = target_ip.split(".")
     arp_packet = b''
 
@@ -86,7 +89,7 @@ def construct_arp_packet(target_ip):
     return arp_packet
 
 # send a request and receive a reply for an ARP packet
-def send_receive_arp(packet, max_failures=3, timeout=.05):
+def send_receive_arp(packet, eth_name, max_failures=1, timeout=.01):
 
     s = socket.socket(
         socket.AF_PACKET, 
@@ -94,7 +97,7 @@ def send_receive_arp(packet, max_failures=3, timeout=.05):
         socket.htons(0x0806) # htons swaps the endianness of the protocol number
     ) 
 
-    s.bind((_find_eth_iface_name(), 0))
+    s.bind((eth_name, 0))
     s.send(packet)
     response = select.select([s], [], [], timeout)
 

@@ -45,26 +45,23 @@ def generate_possible_ips(netmask):
         list_ips.append(decimal_ip)
 
     return list_ips
-    
 
 # given a list of addresses, scan all of them and return active ones
 def network_arp_scan(ip_list):
-    
+
     active = []
+    my_mac = find_mac()
+    my_ip = find_ip()
+    eth_iface = find_eth_iface_name()
 
     for ip in ip_list:
-        p = construct_arp_packet(ip)
-        reply = send_receive_arp(p)
+        p = construct_arp_packet(ip, my_ip, my_mac)
+        reply = send_receive_arp(p, eth_iface)
 
         if reply is not None:
             active.append(reply)
-            print(ip, "Complete and active.")
-        else:
-            print(ip, "Complete.")
-    
-    return active
-    
 
+    return active
 
 if __name__ == "__main__":
     
@@ -73,7 +70,8 @@ if __name__ == "__main__":
     active_hosts = network_arp_scan(possible_addresses)
 
     for host in active_hosts:
-        print(host[0], "-", host[1])
+        addresses = mac_ip_decoder(host)
+        print(addresses[0], "-", addresses[1])
 
 
 
